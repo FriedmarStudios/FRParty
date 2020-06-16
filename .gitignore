@@ -26,3 +26,8 @@ cabal.project.local~
 addons/
 .mono/
 .vscode/
+bin/
+*.translation
+export_presets.cfg
+git_api.gdnlib
+git_api.gdns
