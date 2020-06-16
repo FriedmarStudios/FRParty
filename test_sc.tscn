@@ -1,0 +1,15 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://ding.alpha.png" type="Texture" id=1]
+[ext_resource path="res://player_field.gd" type="Script" id=2]
+[ext_resource path="res://field.png" type="Texture" id=3]
+
+[node name="field" type="Sprite"]
+position = Vector2( 500.864, 501.396 )
+texture = ExtResource( 3 )
+
+[node name="dingalpha" type="Sprite" parent="."]
+position = Vector2( -450.656, -449.613 )
+scale = Vector2( 0.178752, 0.178752 )
+texture = ExtResource( 1 )
+script = ExtResource( 2 )
