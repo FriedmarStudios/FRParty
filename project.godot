@@ -21,13 +21,18 @@ _global_script_class_icons={
 [application]
 
 config/name="FRGame"
-run/main_scene="res://test_sc.tscn"
+run/main_scene="res://Scenes/Board.tscn"
 config/icon="res://icon.png"
 
 [autoload]
 
 UserData="*res://addons/github-integration/scripts/user_data.gd"
 IconLoaderGithub="*res://addons/github-integration/scripts/IconLoaderGithub.gd"
+
+[display]
+
+window/stretch/mode="2d"
+window/stretch/aspect="keep"
 
 [editor_plugins]
 
