@@ -1,45 +1,27 @@
 extends Sprite
 
+#current possition
 var pos = 0
+#animation state
 var run = 0
 
+#old
 const fields = []
+#stores the fields
 var fs = []
 
+#test vars
+#equal to the value from a diceroll
+const maxSteps = 10
+var steps = 0
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	var startv = 16
-	var stepsize = 32
-	var maxl = 9
-	var id:int = 0
-
+	steps = maxSteps
+	get_node("RichTextLabel").text = String(steps)
 	#file.open("res://src/maps/map1/map1.json", file.READ)
 
-	for x in range(10):
-		fs.push_back(FieldObject.new(id, Vector2(startv+stepsize*x, startv), "default", [generateNext(id)]))
-		id+=1
-	for y in range(1, 10):
-		fs.push_back(FieldObject.new(id, Vector2(startv+stepsize*maxl, startv+stepsize*y), "default", [generateNext(id)]))
-		id+=1
-	for x in range(1, 10):
-		fs.push_back(FieldObject.new(id, Vector2(startv+stepsize*(maxl-x), startv+(stepsize*maxl)), "default", [generateNext(id)]))
-		id+=1
-	for y in range(1, 10):
-		fs.push_back(FieldObject.new(id, Vector2(startv, startv+stepsize*(maxl-y)), "default", [generateNext(id)]))
-		id+=1
-	
-	for i in fs:
-		print(i.id,';',i.next[0])
-
-	for x in range(10):
-		fields.push_back({'x': (startv+stepsize*x), 'y': (startv)})
-	for y in range(1, 10):
-		fields.push_back({'x': (startv+stepsize*maxl), 'y': (startv+stepsize*y)})
-	for x in range(1, 10):
-		fields.push_back({'x': (startv+stepsize*(maxl-x)), 'y': (startv+(stepsize*maxl))})
-	for y in range(1, 10):
-		fields.push_back({'x': (startv), 'y': (startv+stepsize*(maxl-y))})
+	fs = getTestData()
 	repaintPos()
 
 #just to generate some test data
@@ -49,19 +31,47 @@ func generateNext(id):
 	else:
 		return id+1
 
+#generates the testdata
+func getTestData():
+	var startv = 16
+	var stepsize = 32
+	var maxl = 9
+	var id:int = 0
+	var ret = []
+
+	for x in range(10):
+		ret.push_back(FieldObject.new(id, Vector2(startv+stepsize*x, startv), "default", [generateNext(id)]))
+		id+=1
+	for y in range(1, 10):
+		ret.push_back(FieldObject.new(id, Vector2(startv+stepsize*maxl, startv+stepsize*y), "default", [generateNext(id)]))
+		id+=1
+	for x in range(1, 10):
+		ret.push_back(FieldObject.new(id, Vector2(startv+stepsize*(maxl-x), startv+(stepsize*maxl)), "default", [generateNext(id)]))
+		id+=1
+	for y in range(1, 10):
+		ret.push_back(FieldObject.new(id, Vector2(startv, startv+stepsize*(maxl-y)), "default", [generateNext(id)]))
+		id+=1
+	return ret
 
 func _process(delta):
 	if run == 0 && Input.is_action_just_pressed("right") :
-		if pos >= fields.size()-1 :
-			pos = 0
-		else:
-			pos+=1
-		run+=1
+
+		if steps>0:
+			if pos >= fs.size()-1 :
+				pos = 0
+			else:
+				pos+=1
+			run+=1
+			steps-=1
+			get_node("RichTextLabel").text = String(steps)
+
 	elif run>0 && run<32:
 		paintAnimation()
 	elif run>=32: 
 		run=0
-	
+	if Input.is_action_just_pressed("left") :
+		flip_h = !flip_h
+
 func paintAnimation():
 	if getX(prevPos()) < getX(pos) :
 		position.x = getX(prevPos())+run

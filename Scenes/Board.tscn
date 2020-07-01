@@ -58,3 +58,14 @@ script = ExtResource( 3 )
 [node name="Camera2D" type="Camera2D" parent="Player"]
 current = true
 zoom = Vector2( 0.24, 0.24 )
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Player"]
+margin_left = 11.5949
+margin_top = -22.3992
+margin_right = 51.5949
+margin_bottom = 17.6008
+custom_colors/default_color = Color( 0, 0, 0, 1 )
+text = "Hello"
+__meta__ = {
+"_edit_use_anchors_": false
+}
