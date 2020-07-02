@@ -5,6 +5,8 @@ var pos = 0
 #animation state
 var run = 0
 
+var posBoard = [0,0]
+
 #old
 const fields = []
 #stores the fields
@@ -15,73 +17,87 @@ var fs = []
 const maxSteps = 10
 var steps = 0
 
+#tilesize in pixel
+const tileSize = 32
+
+const tileOffset = 16
+
+const animationSpeed = 1
+
+# 0: normal move mode
+# 1: path select mode
+var gameState = 0
+
+var pathArrowState = 0
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	steps = maxSteps
 	get_node("RichTextLabel").text = String(steps)
 	#file.open("res://src/maps/map1/map1.json", file.READ)
 
-	fs = getTestData()
-	repaintPos()
+	get_node("/root/Game/Board/FieldPath").visible = false
+	get_node("path_arrow").visible = false
 
-#just to generate some test data
-func generateNext(id):
-	if id >= 36:
-		return 0
-	else:
-		return id+1
 
-#generates the testdata
-func getTestData():
-	var startv = 16
-	var stepsize = 32
-	var maxl = 9
-	var id:int = 0
-	var ret = []
-
-	for x in range(10):
-		ret.push_back(FieldObject.new(id, Vector2(startv+stepsize*x, startv), "default", [generateNext(id)]))
-		id+=1
-	for y in range(1, 10):
-		ret.push_back(FieldObject.new(id, Vector2(startv+stepsize*maxl, startv+stepsize*y), "default", [generateNext(id)]))
-		id+=1
-	for x in range(1, 10):
-		ret.push_back(FieldObject.new(id, Vector2(startv+stepsize*(maxl-x), startv+(stepsize*maxl)), "default", [generateNext(id)]))
-		id+=1
-	for y in range(1, 10):
-		ret.push_back(FieldObject.new(id, Vector2(startv, startv+stepsize*(maxl-y)), "default", [generateNext(id)]))
-		id+=1
-	return ret
 
 func _process(delta):
-	if run == 0 && Input.is_action_just_pressed("right") :
 
-		if steps>0:
-			if pos >= fs.size()-1 :
-				pos = 0
-			else:
-				pos+=1
-			run+=1
-			steps-=1
-			get_node("RichTextLabel").text = String(steps)
+	match gameState:
+		0:
+			if !onTheMove() && Input.is_action_just_pressed("right") :
 
-	elif run>0 && run<32:
-		paintAnimation()
-	elif run>=32: 
-		run=0
-	if Input.is_action_just_pressed("left") :
-		flip_h = !flip_h
+				if steps>0:
+					move()
+					steps-=1
+					get_node("RichTextLabel").text = String(steps)
+					flip_h = false
+
+			elif onTheMove():
+				paintAnimation()
+			elif getCurrentField(posBoard) > 3:
+				changeGameState(1)
+			if Input.is_action_just_pressed("left") :
+				flip_h = true
+				#moveBack()
+		1:
+			var f = getCurrentField(posBoard)
+			if Input.is_action_just_pressed("right"):
+				if isValidArrowPath(0):
+					setPathArrowState(0)
+			elif Input.is_action_just_pressed("left"):
+				if isValidArrowPath(1):
+					setPathArrowState(1)
+			elif Input.is_action_just_pressed("up"):
+				if isValidArrowPath(2):
+					setPathArrowState(2)
+			elif Input.is_action_just_pressed("down"):
+				if isValidArrowPath(3):
+					setPathArrowState(3)
+			elif Input.is_action_just_pressed("enter"):
+				match pathArrowState:
+					0:
+						goRight()
+					1:
+						goLeft()
+					2:
+						goUp()
+					3:
+						goDown()
+				changeGameState(0)
+
+
 
 func paintAnimation():
-	if getX(prevPos()) < getX(pos) :
-		position.x = getX(prevPos())+run
-	if getY(prevPos()) < getY(pos) :
-		position.y = getY(prevPos())+run
-	if getX(prevPos()) > getX(pos) :
-		position.x = getX(prevPos())-run
-	if getY(prevPos()) > getY(pos) :
-		position.y = getY(prevPos())-run
-	run+=1
+	if position.x < getAbsolutePosition(posBoard).x:
+		position.x += animationSpeed
+	elif position.x > getAbsolutePosition(posBoard).x:
+		position.x -= animationSpeed
+	if position.y < getAbsolutePosition(posBoard).y:
+		position.y += animationSpeed
+	elif position.y > getAbsolutePosition(posBoard).y:
+		position.y -= animationSpeed
+
 
 func repaintPos():
 	position.x = getX(pos)
@@ -102,3 +118,131 @@ func getField(id):
 	for i in fs:
 		if i.id == id:
 			return i
+
+func onTheMove():
+	return position.x != getAbsolutePosition(posBoard).x || position.y != getAbsolutePosition(posBoard).y
+
+func move():
+	var move = getCurrentField(posBoard)
+	match move:
+		0:
+			goRight()
+		1:
+			goLeft()
+		2: 
+			goDown()
+		3:
+			goUp()
+		_:
+			if move > 3:
+				changeGameState(1)
+
+
+func moveBack():
+	var move = getCurrentField(posBoard)
+	match move:
+		0:
+			goLeft()
+		1:
+			goRight()
+		2: 
+			goUp()
+		3:
+			goDown()
+
+func goLeft():
+	posBoard[0] = posBoard[0]-1
+
+func goRight():
+	posBoard[0] = posBoard[0]+1
+
+func goUp():
+	posBoard[1] = posBoard[1]-1
+
+func goDown():
+	posBoard[1] = posBoard[1]+1
+
+func getAbsolutePosition(field:Array):
+	return Vector2((field[0]*tileSize)+tileOffset, (field[1]*tileSize)+tileOffset)
+
+func changeGameState(gs:int):
+	gameState = gs
+	match gs:
+		0:
+			get_node("path_arrow").visible = false
+		1:
+			get_node("path_arrow").visible = true
+			setPathArrowState(-1)
+
+# 0: right
+# 1: left
+# 2: down
+# 3: up
+# 4: up or right
+# 5: down or right
+# 6: up or left
+# 7: down or left
+# 8: down or right
+# 9: down or left
+# 10: up or right
+# 11: up or left
+# 12: up or down or right
+# 13: up or down or left
+# 14: down or left or right
+# 15: up or left or right
+func getCurrentField(field:Array):
+	var path = get_node("/root/Game/Board/FieldPath")
+	return path.get_cell(field[0], field[1])
+
+# 0: right
+# 1: left
+# 2: up
+# 3: down
+func setPathArrowState(direction:int):
+	var arrow = get_node("path_arrow")
+	var f = getCurrentField(posBoard)
+
+	if direction==-1:
+		direction = getValidArrowPath()[0]
+	elif isValidArrowPath(direction):
+		pathArrowState = direction
+
+	match pathArrowState:
+		0:
+			arrow.rotation_degrees = 90
+		1:
+			arrow.rotation_degrees = 270
+		2:
+			arrow.rotation_degrees = 0
+		_:
+			arrow.rotation_degrees = 180
+
+# 0: right
+# 1: left
+# 2: up
+# 3: down
+func isValidArrowPath(direction:int):
+	var f = getCurrentField(posBoard)
+	if direction==0 && (f==4 || f==5 || f==8 || f==12 || f==14 || f==15):
+		return true
+	elif direction==1 && (f==6 || f==7 || f==9 || f==11 || f==13 || f==14 || f==15):
+		return true
+	elif direction==2 && (f==4 || f==6 || f==10 || f==11 || f==12 || f==13 || f==15):
+		return true
+	elif direction==3 && (f==5 || f==7 || f==8 || f==9 || f==12 || f==13 || f==14):
+		return true
+	else:
+		return false
+
+func getValidArrowPath():
+	var ret = []
+	var f = getCurrentField(posBoard)
+	if f==4 || f==5 || f==8 || f==12 || f==14 || f==15:
+		ret.push_back(0)
+	if f==6 || f==7 || f==9 || f==11 || f==13 || f==14 || f==15:
+		ret.push_back(1)
+	if f==4 || f==6 || f==10 || f==11 || f==12 || f==13 || f==15:
+		ret.push_back(2)
+	if f==5 || f==7 || f==8 || f==9 || f==12 || f==13 || f==14:
+		ret.push_back(3)
+	return ret
