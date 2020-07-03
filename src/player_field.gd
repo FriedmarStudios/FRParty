@@ -30,6 +30,8 @@ var gameState = 0
 
 var pathArrowState = 0
 
+var rng = RandomNumberGenerator.new()
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	steps = maxSteps
@@ -43,23 +45,29 @@ func _ready():
 
 func _process(delta):
 
+	if Input.is_action_just_pressed("X"):
+		toggleCam()
+
 	match gameState:
+		# walk mode
 		0:
-			if !onTheMove() && Input.is_action_just_pressed("right") :
+			if !onTheMove():
 
 				if steps>0:
 					move()
-					steps-=1
-					get_node("RichTextLabel").text = String(steps)
+					setSteps(steps-1)
 					flip_h = false
 
 			elif onTheMove():
 				paintAnimation()
 			elif getCurrentField(posBoard) > 3:
 				changeGameState(1)
+			if steps<=0:
+				changeGameState(2)
 			if Input.is_action_just_pressed("left") :
 				flip_h = true
 				#moveBack()
+		# path select mode
 		1:
 			var f = getCurrentField(posBoard)
 			if Input.is_action_just_pressed("right"):
@@ -85,7 +93,12 @@ func _process(delta):
 					3:
 						goDown()
 				changeGameState(0)
-
+		# roll dice mode
+		2:
+			if Input.is_action_just_pressed("enter"):
+				rng.randomize()
+				setSteps(rng.randi_range(1,10))
+				changeGameState(0)
 
 
 func paintAnimation():
@@ -173,6 +186,14 @@ func changeGameState(gs:int):
 		1:
 			get_node("path_arrow").visible = true
 			setPathArrowState(-1)
+		2: 
+			get_node("RichTextLabel").text = "roll Dice"
+			get_node("path_arrow").visible = false
+
+func setSteps(step:int):
+	steps = step
+	get_node("RichTextLabel").text = String(steps)
+
 
 # 0: right
 # 1: left
@@ -246,3 +267,13 @@ func getValidArrowPath():
 	if f==5 || f==7 || f==8 || f==9 || f==12 || f==13 || f==14:
 		ret.push_back(3)
 	return ret
+
+
+func toggleCam():
+	var pc = get_node("PlayerCam")
+	var bc = get_node("/root/Game/Board/BoardCam")
+
+	var pcc = pc.current
+	var bcc = bc.current
+	pc.current = bcc
+	bc.current = pcc
