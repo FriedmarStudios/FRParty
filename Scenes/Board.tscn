@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://Assets/FieldTiles.png" type="Texture" id=1]
 [ext_resource path="res://Assets/Player.png" type="Texture" id=2]
@@ -8,6 +8,8 @@
 [ext_resource path="res://Assets/map_arrows.png" type="Texture" id=6]
 [ext_resource path="res://Assets/path_arrow.png" type="Texture" id=7]
 [ext_resource path="res://Assets/path.png" type="Texture" id=8]
+[ext_resource path="res://Scenes/Game.gd" type="Script" id=9]
+[ext_resource path="res://Scenes/PlayerCam.gd" type="Script" id=10]
 
 [sub_resource type="TileSet" id=1]
 0/name = "FieldTiles.png 0"
@@ -354,6 +356,7 @@
 15/z_index = 0
 
 [node name="Game" type="Node2D"]
+script = ExtResource( 9 )
 
 [node name="Board" type="Node2D" parent="."]
 
@@ -378,15 +381,17 @@ script = ExtResource( 4 )
 position = Vector2( 157.064, 164.051 )
 zoom = Vector2( 0.556, 0.556 )
 
+[node name="PlayerCam" type="Camera2D" parent="."]
+position = Vector2( 16, 16 )
+current = true
+zoom = Vector2( 0.24, 0.24 )
+script = ExtResource( 10 )
+
 [node name="Player" type="Sprite" parent="."]
 position = Vector2( 16, 16 )
 z_index = 1
 texture = ExtResource( 2 )
 script = ExtResource( 3 )
-
-[node name="PlayerCam" type="Camera2D" parent="Player"]
-current = true
-zoom = Vector2( 0.24, 0.24 )
 
 [node name="RichTextLabel" type="RichTextLabel" parent="Player"]
 margin_left = 11.5949
@@ -403,3 +408,5 @@ __meta__ = {
 position = Vector2( 2.28888, 1.11499 )
 texture = ExtResource( 7 )
 offset = Vector2( 0, -32 )
+[connection signal="startPlayer1" from="." to="Player" method="_on_Game_startPlayer1"]
+[connection signal="finished" from="Player" to="." method="_on_Player_finished"]

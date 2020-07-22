@@ -32,73 +32,93 @@ var pathArrowState = 0
 
 var rng = RandomNumberGenerator.new()
 
+var myTurn = false
+
+var playerCam = null
+
+signal finished(playerId, isFinished)
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	steps = maxSteps
 	get_node("RichTextLabel").text = String(steps)
+	get_node("RichTextLabel").visible = false
 	#file.open("res://src/maps/map1/map1.json", file.READ)
 
 	get_node("/root/Game/Board/FieldPath").visible = false
 	get_node("path_arrow").visible = false
 
+	playerCam = get_node("/root/Game/PlayerCam")
 
+func _on_Game_startPlayer1():
+	get_node("RichTextLabel").visible = true
+	changeGameState(2)
+	myTurn = true
+	repaintPlayerCam()
+	
+func finished():
+	myTurn = false
+	get_node("RichTextLabel").visible = false
+	get_node("path_arrow").visible = false
+	emit_signal("finished",1, true)
 
 func _process(delta):
 
-	if Input.is_action_just_pressed("X"):
-		toggleCam()
+	if myTurn:
+		if Input.is_action_just_pressed("X"):
+			toggleCam()
 
-	match gameState:
-		# walk mode
-		0:
-			if !onTheMove():
+		match gameState:
+			# walk mode
+			0:
+				if !onTheMove():
 
-				if steps>0:
-					move()
-					setSteps(steps-1)
-					flip_h = false
+					if steps>0:
+						move()
+						setSteps(steps-1)
+						flip_h = false
 
-			elif onTheMove():
-				paintAnimation()
-			elif getCurrentField(posBoard) > 3:
-				changeGameState(1)
-			if steps<=0:
-				changeGameState(2)
-			if Input.is_action_just_pressed("left") :
-				flip_h = true
-				#moveBack()
-		# path select mode
-		1:
-			var f = getCurrentField(posBoard)
-			if Input.is_action_just_pressed("right"):
-				if isValidArrowPath(0):
-					setPathArrowState(0)
-			elif Input.is_action_just_pressed("left"):
-				if isValidArrowPath(1):
-					setPathArrowState(1)
-			elif Input.is_action_just_pressed("up"):
-				if isValidArrowPath(2):
-					setPathArrowState(2)
-			elif Input.is_action_just_pressed("down"):
-				if isValidArrowPath(3):
-					setPathArrowState(3)
-			elif Input.is_action_just_pressed("enter"):
-				match pathArrowState:
-					0:
-						goRight()
-					1:
-						goLeft()
-					2:
-						goUp()
-					3:
-						goDown()
-				changeGameState(0)
-		# roll dice mode
-		2:
-			if Input.is_action_just_pressed("enter"):
-				rng.randomize()
-				setSteps(rng.randi_range(1,10))
-				changeGameState(0)
+				elif onTheMove():
+					paintAnimation()
+				elif getCurrentField(posBoard) > 3:
+					changeGameState(1)
+				if steps<=0:
+					finished()
+				if Input.is_action_just_pressed("left") :
+					flip_h = true
+					#moveBack()
+			# path select mode
+			1:
+				var f = getCurrentField(posBoard)
+				if Input.is_action_just_pressed("right"):
+					if isValidArrowPath(0):
+						setPathArrowState(0)
+				elif Input.is_action_just_pressed("left"):
+					if isValidArrowPath(1):
+						setPathArrowState(1)
+				elif Input.is_action_just_pressed("up"):
+					if isValidArrowPath(2):
+						setPathArrowState(2)
+				elif Input.is_action_just_pressed("down"):
+					if isValidArrowPath(3):
+						setPathArrowState(3)
+				elif Input.is_action_just_pressed("enter"):
+					match pathArrowState:
+						0:
+							goRight()
+						1:
+							goLeft()
+						2:
+							goUp()
+						3:
+							goDown()
+					changeGameState(0)
+			# roll dice mode
+			2:
+				if Input.is_action_just_pressed("enter"):
+					rng.randomize()
+					setSteps(rng.randi_range(1,10))
+					changeGameState(0)
 
 
 func paintAnimation():
@@ -110,6 +130,7 @@ func paintAnimation():
 		position.y += animationSpeed
 	elif position.y > getAbsolutePosition(posBoard).y:
 		position.y -= animationSpeed
+	repaintPlayerCam()
 
 
 func repaintPos():
@@ -270,10 +291,14 @@ func getValidArrowPath():
 
 
 func toggleCam():
-	var pc = get_node("PlayerCam")
+	var pc = get_node("/root/Game/PlayerCam")
 	var bc = get_node("/root/Game/Board/BoardCam")
 
 	var pcc = pc.current
 	var bcc = bc.current
 	pc.current = bcc
 	bc.current = pcc
+
+func repaintPlayerCam():
+	playerCam.position.x = position.x
+	playerCam.position.y = position.y
