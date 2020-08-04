@@ -18,9 +18,14 @@ func _process(delta):
 	pass
 
 func _on_Player_finished(id, fin):
-	if id == 1:
+	print("has finished")
+	if currentPlayerId == 1:
 		currentPlayerId = 2
 		emit_signal("startPlayer2")
 	else:
 		currentPlayerId = 1
 		emit_signal("startPlayer1")
+
+
+func _on_PlayerCam_finished():
+	pass # Replace with function body.

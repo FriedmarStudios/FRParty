@@ -1,4 +1,4 @@
-extends Sprite
+extends AnimatedSprite
 
 #current possition
 var pos = 0
@@ -37,10 +37,11 @@ var myTurn = false
 var playerCam = null
 
 signal finished(playerId, isFinished)
+signal moveCam(pos)
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	steps = maxSteps
+	#steps = maxSteps
 	get_node("RichTextLabel").text = String(steps)
 	get_node("RichTextLabel").visible = false
 	#file.open("res://src/maps/map1/map1.json", file.READ)
@@ -50,14 +51,23 @@ func _ready():
 
 	playerCam = get_node("/root/Game/PlayerCam")
 
+	play('default')
+
 func _on_Game_startPlayer1():
 	get_node("RichTextLabel").visible = true
 	changeGameState(2)
 	myTurn = true
-	repaintPlayerCam()
+	animateCam()
+
+func _on_Game_startPlayer2():
+	get_node("RichTextLabel").visible = true
+	changeGameState(2)
+	myTurn = true
+	animateCam()
 	
 func finished():
 	myTurn = false
+	play('default')
 	get_node("RichTextLabel").visible = false
 	get_node("path_arrow").visible = false
 	emit_signal("finished",1, true)
@@ -79,6 +89,7 @@ func _process(delta):
 						flip_h = false
 
 				elif onTheMove():
+					play('walk')
 					paintAnimation()
 				elif getCurrentField(posBoard) > 3:
 					changeGameState(1)
@@ -89,6 +100,7 @@ func _process(delta):
 					#moveBack()
 			# path select mode
 			1:
+				play('default')
 				var f = getCurrentField(posBoard)
 				if Input.is_action_just_pressed("right"):
 					if isValidArrowPath(0):
@@ -115,6 +127,7 @@ func _process(delta):
 					changeGameState(0)
 			# roll dice mode
 			2:
+				play('default')
 				if Input.is_action_just_pressed("enter"):
 					rng.randomize()
 					setSteps(rng.randi_range(1,10))
@@ -246,7 +259,7 @@ func setPathArrowState(direction:int):
 
 	if direction==-1:
 		direction = getValidArrowPath()[0]
-	elif isValidArrowPath(direction):
+	if isValidArrowPath(direction):
 		pathArrowState = direction
 
 	match pathArrowState:
@@ -302,3 +315,6 @@ func toggleCam():
 func repaintPlayerCam():
 	playerCam.position.x = position.x
 	playerCam.position.y = position.y
+
+func animateCam():
+	emit_signal('moveCam', position)
