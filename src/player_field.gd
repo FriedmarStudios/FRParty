@@ -72,6 +72,7 @@ func finished():
 	get_node("RichTextLabel").visible = false
 	get_node("path_arrow").visible = false
 	emit_signal("finished",1, true)
+	emit_signal('rollDice', -2)
 
 func _process(delta):
 
