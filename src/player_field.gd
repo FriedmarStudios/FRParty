@@ -38,6 +38,7 @@ var playerCam = null
 
 signal finished(playerId, isFinished)
 signal moveCam(pos)
+signal rollDice(num)
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -54,13 +55,13 @@ func _ready():
 	play('default')
 
 func _on_Game_startPlayer1():
-	get_node("RichTextLabel").visible = true
+	# get_node("RichTextLabel").visible = true
 	changeGameState(2)
 	myTurn = true
 	animateCam()
 
 func _on_Game_startPlayer2():
-	get_node("RichTextLabel").visible = true
+	# get_node("RichTextLabel").visible = true
 	changeGameState(2)
 	myTurn = true
 	animateCam()
@@ -128,6 +129,7 @@ func _process(delta):
 			# roll dice mode
 			2:
 				play('default')
+				emit_signal('rollDice', -1)
 				if Input.is_action_just_pressed("enter"):
 					rng.randomize()
 					setSteps(rng.randi_range(1,10))
@@ -226,6 +228,7 @@ func changeGameState(gs:int):
 
 func setSteps(step:int):
 	steps = step
+	emit_signal('rollDice', steps)
 	get_node("RichTextLabel").text = String(steps)
 
 
